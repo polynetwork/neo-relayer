@@ -25,8 +25,6 @@ type Config struct {
 	NeoCCMC       string // little endian string
 
 	ScanInterval uint64
-	GasPrice     uint64
-	GasLimit     uint64
 
 	NeoSyncHeight  uint32
 	RelaySyncHeight uint32

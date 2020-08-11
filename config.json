@@ -7,8 +7,6 @@
   "NeoChainID": 4,
   "NeoCCMC": "7f25d672e8626d2beaa26f2cb40da6b91f40a382",
   "ScanInterval": 2,
-  "GasPrice": 0,
-  "GasLimit": 200000,
   "NeoSyncHeight": 178168,
   "RelaySyncHeight": 1262851
 }
