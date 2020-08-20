@@ -11,11 +11,11 @@ import (
 	"github.com/joeqian10/neo-gogogo/rpc/models"
 	"github.com/joeqian10/neo-gogogo/sc"
 	"github.com/joeqian10/neo-gogogo/tx"
-	"github.com/neo-ngd/Relayer/log"
 	"github.com/ontio/ontology-crypto/ec"
 	"github.com/ontio/ontology-crypto/keypair"
 	"github.com/ontio/ontology-crypto/signature"
 	"github.com/ontio/ontology-crypto/sm2"
+	"github.com/polynetwork/neo-relayer/log"
 	"github.com/polynetwork/poly/common"
 	"github.com/polynetwork/poly/core/types"
 	"strings"
@@ -124,15 +124,15 @@ func (this *SyncService) changeBookKeeper(block *types.Block) error {
 
 	rawTxString := itx.RawTransactionString()
 	// send the raw transaction
-	response2 := this.neoSdk.SendRawTransaction(rawTxString)
-	if response2.HasError() {
+	response := this.neoSdkAppLog.SendRawTransaction(rawTxString)
+	if response.HasError() {
 		return fmt.Errorf("[changeBookKeeper] SendRawTransaction error: %s, " +
 			"unsigned header hex string: %s, " +
 			"public keys hex string: %s, " +
 			"signatures hex string: %s" +
 			"script hex string: %s, " +
 			"changeBookKeeper RawTransactionString: %s",
-			response2.ErrorResponse.Error.Message,
+			response.ErrorResponse.Error.Message,
 			helper.BytesToHex(headerBytes),
 			helper.BytesToHex(bs),
 			helper.BytesToHex(bs2),
@@ -192,6 +192,7 @@ func (this *SyncService) syncHeaderToNeo(height uint32) error {
 	if err != nil {
 		return fmt.Errorf("[syncHeaderToNeo] tb.MakeInvocationTransaction error: %s", err)
 	}
+
 	// sign transaction
 	err = tx.AddSignature(itx, this.neoAccount.KeyPair)
 	if err != nil {
@@ -201,15 +202,15 @@ func (this *SyncService) syncHeaderToNeo(height uint32) error {
 	rawTxString := itx.RawTransactionString()
 
 	// send the raw transaction
-	response2 := this.neoSdk.SendRawTransaction(rawTxString)
-	if response2.HasError() {
+	response := this.neoSdkAppLog.SendRawTransaction(rawTxString)
+	if response.HasError() {
 		return fmt.Errorf("[syncHeaderToNeo] SendRawTransaction error: %s, " +
 			"unsigned header hex string: %s, " +
 			"public keys hex string: %s, " +
 			"signatures hex string: %s" +
 			"script hex string: %s, " +
 			"syncHeaderToNeo RawTransactionString: %s",
-			response2.ErrorResponse.Error.Message,
+			response.ErrorResponse.Error.Message,
 			helper.BytesToHex(sink.Bytes()),
 			helper.BytesToHex(bs1),
 			helper.BytesToHex(bs2),
@@ -249,6 +250,7 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 		Type:  sc.ByteArray,
 		Value: headerToBeVerified.GetMessage(),
 	}
+	log.Infof("txProofHeader: " + helper.BytesToHex(headerToBeVerified.GetMessage()))
 
 	var headerProofBytes []byte
 	var currentHeaderBytes []byte
@@ -295,16 +297,19 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 		Type:  sc.ByteArray,
 		Value: headerProofBytes,
 	}
+	log.Infof("headProof: " + helper.BytesToHex(headerProofBytes))
 
 	currentHeader := sc.ContractParameter{
 		Type:  sc.ByteArray,
 		Value: currentHeaderBytes,
 	}
+	log.Infof("currentHeader: " + helper.BytesToHex(currentHeaderBytes))
 
 	signList := sc.ContractParameter{
 		Type:  sc.ByteArray,
 		Value: signListBytes,
 	}
+	log.Infof("signList: " + helper.BytesToHex(signListBytes))
 
 	// build script
 	scriptBuilder := sc.NewScriptBuilder()
@@ -330,7 +335,7 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	rawTxString := itx.RawTransactionString()
 
 	// send the raw transaction
-	response := this.neoSdk.SendRawTransaction(rawTxString)
+	response := this.neoSdkAppLog.SendRawTransaction(rawTxString)
 	if response.HasError() {
 		return fmt.Errorf("[syncProofToNeo] SendRawTransaction error: %s, path(cp1): %s, cp2: %d, syncProofToNeo RawTransactionString: %s",
 			response.ErrorResponse.Error.Message, helper.BytesToHex(path), int64(blockHeightReliable), rawTxString)

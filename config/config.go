@@ -14,9 +14,8 @@ const (
 
 //Config object used by neo-instance
 type Config struct {
-	RelayJsonRpcUrl string
-
-	WalletFile      string
+	RelayJsonRpcUrl   string
+	WalletFile        string
 	RelayAccountsPath string
 
 	NeoWalletFile string
@@ -24,9 +23,11 @@ type Config struct {
 	NeoChainID    uint64
 	NeoCCMC       string // little endian string
 
-	ScanInterval uint64
+	ScanInterval    uint64
+	RetryInterval   uint64
+	DBPath          string
 
-	NeoSyncHeight  uint32
+	NeoSyncHeight   uint32
 	RelaySyncHeight uint32
 }
 

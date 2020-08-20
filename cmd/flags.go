@@ -3,7 +3,7 @@ package cmd
 import (
 	"strings"
 
-	"github.com/neo-ngd/Relayer/config"
+	"github.com/polynetwork/neo-relayer/config"
 	"github.com/urfave/cli"
 )
 

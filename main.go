@@ -4,17 +4,19 @@ import (
 	"fmt"
 	"github.com/joeqian10/neo-gogogo/rpc"
 	"github.com/joeqian10/neo-gogogo/wallet"
+	"github.com/polynetwork/poly/core/types"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
-	"github.com/neo-ngd/Relayer/cmd"
-	"github.com/neo-ngd/Relayer/common"
-	"github.com/neo-ngd/Relayer/config"
-	"github.com/neo-ngd/Relayer/log"
-	"github.com/neo-ngd/Relayer/service"
+	"github.com/polynetwork/neo-relayer/cmd"
+	"github.com/polynetwork/neo-relayer/common"
+	"github.com/polynetwork/neo-relayer/config"
+	"github.com/polynetwork/neo-relayer/log"
+	"github.com/polynetwork/neo-relayer/service"
 
 	relaySdk "github.com/polynetwork/poly-go-sdk"
 	"github.com/urfave/cli"
@@ -49,7 +51,7 @@ func main() {
 func startSync(ctx *cli.Context) {
 	logLevel := ctx.GlobalInt(cmd.GetFlagName(cmd.LogLevelFlag))
 	log.InitLog(logLevel, log.PATH, log.Stdout)
-	log.InitErrorCaseLogger(logLevel, log.ErrorCasePath, log.Stdout)
+	//log.InitErrorCaseLogger(logLevel, log.ErrorCasePath, log.Stdout)
 	configPath := ctx.String(cmd.GetFlagName(cmd.ConfigPathFlag))
 	err := config.DefConfig.Init(configPath)
 	if err != nil {
@@ -62,7 +64,8 @@ func startSync(ctx *cli.Context) {
 
 	//create Relay Chain RPC Client
 	relaySdk := relaySdk.NewPolySdk()
-	if err := SetUpPoly(relaySdk, config.DefConfig.RelayJsonRpcUrl); err != nil {
+	err = SetUpPoly(relaySdk, config.DefConfig.RelayJsonRpcUrl)
+	if err != nil {
 		panic(fmt.Errorf("failed to set up poly: %v", err))
 	}
 
@@ -114,7 +117,7 @@ func waitToExit() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
 		for sig := range sc {
-			log.Infof("Neo Relayer received exit signal:%v.", sig.String())
+			log.Infof("Neo Relayer received exit signal: %v.", sig.String())
 			close(exit)
 			break
 		}
@@ -124,10 +127,36 @@ func waitToExit() {
 
 func SetUpPoly(poly *relaySdk.PolySdk, rpcAddr string) error {
 	poly.NewRpcClient().SetAddress(rpcAddr)
-	hdr, err := poly.GetHeaderByHeight(0)
-	if err != nil {
-		return err
+	c1 := make(chan *types.Header, 1)
+	c2 := make(chan error, 1)
+
+	// use another routine to check time out and error
+	go func() {
+		hdr, err := poly.GetHeaderByHeight(0)
+		if err != nil {
+			c2 <- err
+		}
+		c1 <- hdr
+	}()
+
+	select {
+	case hdr := <- c1:
+		poly.SetChainId(hdr.ChainID)
+	case err := <- c2:
+		return  err
+	case <- time.After(time.Second * 5):
+		return fmt.Errorf("poly rpc port timeout")
 	}
-	poly.SetChainId(hdr.ChainID)
+
 	return nil
 }
+
+//func SetUpPoly1(poly *relaySdk.PolySdk, rpcAddr string) error {
+//	poly.NewRpcClient().SetAddress(rpcAddr)
+//	hdr, err := poly.GetHeaderByHeight(0)
+//	if err != nil {
+//		return err
+//	}
+//	poly.SetChainId(hdr.ChainID)
+//	return nil
+//}

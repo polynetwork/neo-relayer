@@ -3,7 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/neo-ngd/Relayer/log"
+	"github.com/polynetwork/neo-relayer/log"
 	vconfig "github.com/polynetwork/poly/consensus/vbft/config"
 	autils "github.com/polynetwork/poly/native/service/utils"
 	"time"
@@ -40,10 +40,10 @@ func (this *SyncService) relayToNeo(m, n uint32) error {
 		if blkInfo.NewChainConfig != nil {
 			err = this.changeBookKeeper(block)
 			if err != nil {
-				log.ErrorCaseLogger.Errorf("--------------------------------------------------")
-				log.ErrorCaseLogger.Errorf("[relayToNeo] syncHeaderToNeo error: %s", err)
-				log.ErrorCaseLogger.Errorf("height: %d")
-				log.ErrorCaseLogger.Errorf("--------------------------------------------------")
+				log.Errorf("--------------------------------------------------")
+				log.Errorf("[relayToNeo] syncHeaderToNeo error: %s", err)
+				log.Errorf("polyHeight: %d", i)
+				log.Errorf("--------------------------------------------------")
 			}
 		}
 
@@ -73,10 +73,10 @@ func (this *SyncService) relayToNeo(m, n uint32) error {
 						}
 						err = this.syncProofToNeo(key, i, uint32(currentNeoChainSyncHeight))
 						if err != nil {
-							log.ErrorCaseLogger.Errorf("--------------------------------------------------")
-							log.ErrorCaseLogger.Errorf("[relayToNeo] syncProofToNeo error: %s", err)
-							log.ErrorCaseLogger.Errorf("height: %d, key: %s", i, key)
-							log.ErrorCaseLogger.Errorf("--------------------------------------------------")
+							log.Errorf("--------------------------------------------------")
+							log.Errorf("[relayToNeo] syncProofToNeo error: %s", err)
+							log.Errorf("polyHeight: %d, key: %s", i, key)
+							log.Errorf("--------------------------------------------------")
 						}
 					}
 				}

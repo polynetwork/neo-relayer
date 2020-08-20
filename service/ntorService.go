@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/joeqian10/neo-gogogo/helper"
-	"github.com/neo-ngd/Relayer/log"
+	"github.com/polynetwork/neo-relayer/log"
 	"time"
 )
 
@@ -50,10 +50,10 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 			// Syncing key blockHeader to Relay Chain
 			err := this.syncHeaderToRelay(this.relaySyncHeight)
 			if err != nil {
-				log.ErrorCaseLogger.Errorf("--------------------------------------------------")
-				log.ErrorCaseLogger.Errorf("[neoToRelay] syncHeaderToRelay error: %s", err)
-				log.ErrorCaseLogger.Errorf("height: %d", i)
-				log.ErrorCaseLogger.Errorf("--------------------------------------------------")
+				log.Errorf("--------------------------------------------------")
+				log.Errorf("[neoToRelay] syncHeaderToRelay error: %s", err)
+				log.Errorf("height: %d", i)
+				log.Errorf("--------------------------------------------------")
 			}
 			this.neoNextConsensus = blk.NextConsensus
 		}
@@ -101,10 +101,10 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 						}
 						err = this.syncProofToRelay(key, passed)
 						if err != nil {
-							log.ErrorCaseLogger.Errorf("--------------------------------------------------")
-							log.ErrorCaseLogger.Errorf("[neoToRelay] syncProofToRelay error: %s", err)
-							log.ErrorCaseLogger.Errorf("height: %d, txId: %s", i, tx.Txid)
-							log.ErrorCaseLogger.Errorf("--------------------------------------------------")
+							log.Errorf("--------------------------------------------------")
+							log.Errorf("[neoToRelay] syncProofToRelay error: %s", err)
+							log.Errorf("neoHeight: %d, neoTxId: %s", i, tx.Txid)
+							log.Errorf("--------------------------------------------------")
 						}
 					}
 				} // notification

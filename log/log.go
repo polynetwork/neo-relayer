@@ -69,7 +69,6 @@ func GetGID() uint64 {
 }
 
 var Log *Logger
-var ErrorCaseLogger *Logger
 
 func init() {
 	//Default print to console
@@ -351,33 +350,33 @@ func InitLog(logLevel int, a ...interface{}) {
 	Log = New(fileAndStdoutWrite, "", log.Ldate|log.Lmicroseconds, logLevel, logFile)
 }
 
-func InitErrorCaseLogger(logLevel int, a ...interface{}) {
-	writers := []io.Writer{}
-	var logFile *os.File
-	var err error
-	if len(a) == 0 {
-		writers = append(writers, ioutil.Discard)
-	} else {
-		for _, o := range a {
-			switch o.(type) {
-			case string:
-				logFile, err = FileOpen(o.(string))
-				if err != nil {
-					fmt.Println("error: open log file failed")
-					os.Exit(1)
-				}
-				writers = append(writers, logFile)
-			case *os.File:
-				writers = append(writers, o.(*os.File))
-			default:
-				fmt.Println("error: invalid log location")
-				os.Exit(1)
-			}
-		}
-	}
-	fileAndStdoutWrite := io.MultiWriter(writers...)
-	ErrorCaseLogger = New(fileAndStdoutWrite, "", log.Ldate|log.Lmicroseconds, logLevel, logFile)
-}
+//func InitErrorCaseLogger(logLevel int, a ...interface{}) {
+//	writers := []io.Writer{}
+//	var logFile *os.File
+//	var err error
+//	if len(a) == 0 {
+//		writers = append(writers, ioutil.Discard)
+//	} else {
+//		for _, o := range a {
+//			switch o.(type) {
+//			case string:
+//				logFile, err = FileOpen(o.(string))
+//				if err != nil {
+//					fmt.Println("error: open log file failed")
+//					os.Exit(1)
+//				}
+//				writers = append(writers, logFile)
+//			case *os.File:
+//				writers = append(writers, o.(*os.File))
+//			default:
+//				fmt.Println("error: invalid log location")
+//				os.Exit(1)
+//			}
+//		}
+//	}
+//	fileAndStdoutWrite := io.MultiWriter(writers...)
+//	ErrorCaseLogger = New(fileAndStdoutWrite, "", log.Ldate|log.Lmicroseconds, logLevel, logFile)
+//}
 
 func GetLogFileSize() (int64, error) {
 	f, e := Log.logFile.Stat()
