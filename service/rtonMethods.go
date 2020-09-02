@@ -123,8 +123,9 @@ func (this *SyncService) changeBookKeeper(block *types.Block) error {
 	}
 
 	rawTxString := itx.RawTransactionString()
+	log.Infof(rawTxString)
 	// send the raw transaction
-	response := this.neoSdkAppLog.SendRawTransaction(rawTxString)
+	response := this.neoSdk.SendRawTransaction(rawTxString)
 	if response.HasError() {
 		return fmt.Errorf("[changeBookKeeper] SendRawTransaction error: %s, " +
 			"unsigned header hex string: %s, " +
@@ -202,7 +203,7 @@ func (this *SyncService) syncHeaderToNeo(height uint32) error {
 	rawTxString := itx.RawTransactionString()
 
 	// send the raw transaction
-	response := this.neoSdkAppLog.SendRawTransaction(rawTxString)
+	response := this.neoSdk.SendRawTransaction(rawTxString)
 	if response.HasError() {
 		return fmt.Errorf("[syncHeaderToNeo] SendRawTransaction error: %s, " +
 			"unsigned header hex string: %s, " +
@@ -335,7 +336,7 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	rawTxString := itx.RawTransactionString()
 
 	// send the raw transaction
-	response := this.neoSdkAppLog.SendRawTransaction(rawTxString)
+	response := this.neoSdk.SendRawTransaction(rawTxString)
 	if response.HasError() {
 		return fmt.Errorf("[syncProofToNeo] SendRawTransaction error: %s, path(cp1): %s, cp2: %d, syncProofToNeo RawTransactionString: %s",
 			response.ErrorResponse.Error.Message, helper.BytesToHex(path), int64(blockHeightReliable), rawTxString)

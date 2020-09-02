@@ -18,7 +18,6 @@ type SyncService struct {
 
 	neoAccount       *wallet.Account
 	neoSdk           *neoRpc.RpcClient
-	neoSdkAppLog     *neoRpc.RpcClient
 	neoSyncHeight    uint32
 	neoNextConsensus string
 
