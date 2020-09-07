@@ -22,6 +22,8 @@ type Config struct {
 	NeoJsonRpcUrl string
 	NeoChainID    uint64
 	NeoCCMC       string // little endian string
+	NeoSysFee		float64
+	NeoNetFee		float64
 
 	ScanInterval    uint64
 	RetryInterval   uint64

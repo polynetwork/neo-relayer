@@ -72,7 +72,7 @@ func (this *SyncService) changeBookKeeper(block *types.Block) error {
 	blkInfo := &vconfig.VbftBlockInfo{}
 	_ = json.Unmarshal(block.Header.ConsensusPayload, blkInfo) // already checked before
 	if blkInfo.NewChainConfig != nil {
-		var bookkeepers  []keypair.PublicKey
+		var bookkeepers []keypair.PublicKey
 		for _, peer := range blkInfo.NewChainConfig.Peers {
 			keyBytes, _ := hex.DecodeString(peer.ID)
 			key, _ := keypair.DeserializePublicKey(keyBytes) // compressed
@@ -112,7 +112,9 @@ func (this *SyncService) changeBookKeeper(block *types.Block) error {
 	tb := tx.NewTransactionBuilder(this.config.NeoJsonRpcUrl)
 	from, err := helper.AddressToScriptHash(this.neoAccount.Address)
 	// create an InvocationTransaction
-	itx, err := tb.MakeInvocationTransaction(script, from, nil, from, helper.Zero)
+	sysFee := helper.Fixed8FromFloat64(this.config.NeoSysFee)
+	netFee := helper.Fixed8FromFloat64(this.config.NeoNetFee)
+	itx, err := tb.MakeInvocationTransaction(script, from, nil, from, sysFee, netFee)
 	if err != nil {
 		return fmt.Errorf("[changeBookKeeper] tb.MakeInvocationTransaction error: %s", err)
 	}
@@ -127,11 +129,11 @@ func (this *SyncService) changeBookKeeper(block *types.Block) error {
 	// send the raw transaction
 	response := this.neoSdk.SendRawTransaction(rawTxString)
 	if response.HasError() {
-		return fmt.Errorf("[changeBookKeeper] SendRawTransaction error: %s, " +
-			"unsigned header hex string: %s, " +
-			"public keys hex string: %s, " +
-			"signatures hex string: %s" +
-			"script hex string: %s, " +
+		return fmt.Errorf("[changeBookKeeper] SendRawTransaction error: %s, "+
+			"unsigned header hex string: %s, "+
+			"public keys hex string: %s, "+
+			"signatures hex string: %s"+
+			"script hex string: %s, "+
 			"changeBookKeeper RawTransactionString: %s",
 			response.ErrorResponse.Error.Message,
 			helper.BytesToHex(headerBytes),
@@ -189,7 +191,9 @@ func (this *SyncService) syncHeaderToNeo(height uint32) error {
 	tb := tx.NewTransactionBuilder(this.config.NeoJsonRpcUrl)
 	from, err := helper.AddressToScriptHash(this.neoAccount.Address)
 	// create an InvocationTransaction
-	itx, err := tb.MakeInvocationTransaction(script, from, nil, from, helper.Zero)
+	sysFee := helper.Fixed8FromFloat64(this.config.NeoSysFee)
+	netFee := helper.Fixed8FromFloat64(this.config.NeoNetFee)
+	itx, err := tb.MakeInvocationTransaction(script, from, nil, from, sysFee, netFee)
 	if err != nil {
 		return fmt.Errorf("[syncHeaderToNeo] tb.MakeInvocationTransaction error: %s", err)
 	}
@@ -205,11 +209,11 @@ func (this *SyncService) syncHeaderToNeo(height uint32) error {
 	// send the raw transaction
 	response := this.neoSdk.SendRawTransaction(rawTxString)
 	if response.HasError() {
-		return fmt.Errorf("[syncHeaderToNeo] SendRawTransaction error: %s, " +
-			"unsigned header hex string: %s, " +
-			"public keys hex string: %s, " +
-			"signatures hex string: %s" +
-			"script hex string: %s, " +
+		return fmt.Errorf("[syncHeaderToNeo] SendRawTransaction error: %s, "+
+			"unsigned header hex string: %s, "+
+			"public keys hex string: %s, "+
+			"signatures hex string: %s"+
+			"script hex string: %s, "+
 			"syncHeaderToNeo RawTransactionString: %s",
 			response.ErrorResponse.Error.Message,
 			helper.BytesToHex(sink.Bytes()),
@@ -312,6 +316,21 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	}
 	log.Infof("signList: " + helper.BytesToHex(signListBytes))
 
+	stateRootValue, err := MerkleProve(path, headerToBeVerified.CrossStateRoot.ToArray())
+	if err != nil {
+		return fmt.Errorf("[syncProofToNeo] MerkleProve error: %s", err)
+	}
+	toMerkleValue, err := DeserializeMerkleValue(stateRootValue)
+	if err != nil {
+		return fmt.Errorf("[syncProofToNeo] DeserializeMerkleValue error: %s", err)
+	}
+
+	fromContract := toMerkleValue.TxParam.FromContract
+	log.Infof(helper.BytesToHex(fromContract))
+
+	toContract := toMerkleValue.TxParam.ToContract
+	log.Infof(helper.BytesToHex(toContract))
+
 	// build script
 	scriptBuilder := sc.NewScriptBuilder()
 	scriptHash := helper.HexToBytes(this.config.NeoCCMC) // hex string to little endian byte[]
@@ -323,7 +342,9 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	tb := tx.NewTransactionBuilder(this.config.NeoJsonRpcUrl)
 	from, err := helper.AddressToScriptHash(this.neoAccount.Address)
 	// create an InvocationTransaction
-	itx, err := tb.MakeInvocationTransaction(script, from, nil, from, helper.Zero)
+	sysFee := helper.Fixed8FromFloat64(this.config.NeoSysFee)
+	netFee := helper.Fixed8FromFloat64(this.config.NeoNetFee)
+	itx, err := tb.MakeInvocationTransaction(script, from, nil, from, sysFee, netFee)
 	if err != nil {
 		return fmt.Errorf("[syncHeaderToNeo] tb.MakeInvocationTransaction error: %s", err)
 	}

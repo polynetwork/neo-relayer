@@ -50,8 +50,8 @@ func NewSyncService(acct *rsdk.Account, relaySdk *rsdk.PolySdk, neoAccount *wall
 // Run ...
 func (this *SyncService) Run() {
 	go this.NeoToRelay()
-	go this.RelayToNeo()
-	go this.ProcessToRelayCheckAndRetry()
+	//go this.RelayToNeo()
+	//go this.ProcessToRelayCheckAndRetry()
 }
 
 func checkIfExist(dir string) bool {

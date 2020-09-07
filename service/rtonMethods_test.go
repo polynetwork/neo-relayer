@@ -134,3 +134,21 @@ func Test_ContainString(t *testing.T)  {
 		log.Infof("yes")
 	}
 }
+
+func Test_SaveLife(t *testing.T) {
+	client := rpc.NewClient("http://seed10.ngd.network:20332")
+	expectedNextConsensus := "51c320d9459aa6b524456babb2b4a8ac8e432b8a"
+	realNextConsensus := "51c320d9459aa6b524456babb2b4a8ac8e432b8a"
+	index := uint32(4387120)
+
+	for expectedNextConsensus == realNextConsensus {
+		log.Infof(strconv.Itoa(int(index)))
+		header := client.GetBlockHeaderByIndex(index)
+		scriptHash, err := helper.AddressToScriptHash(header.Result.NextConsensus)
+		assert.Nil(t, err)
+		realNextConsensus = helper.BytesToHex(helper.ReverseBytes(scriptHash.Bytes()))
+		index = index - 10000
+	}
+
+	log.Infof(strconv.Itoa(int(index)))
+}

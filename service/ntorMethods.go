@@ -58,6 +58,7 @@ func (this *SyncService) syncHeaderToRelay(height uint32) error {
 	buff := io.NewBufBinaryWriter()
 	blockHeader.Serialize(buff.BinaryWriter)
 	header := buff.Bytes()
+	log.Infof(helper.BytesToHex(header))
 
 	var txHash pCommon.Uint256
 	var txErr error
