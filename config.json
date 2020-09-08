@@ -1,17 +1,17 @@
 {
   "RelayJsonRpcUrl": "http://40.115.182.238:20336",
   "RelayChainID": 0,
-  "RelayAccountsPath": "./relayChainWallets/newLocal",
   "WalletFile": "./wallet.dat",
   "NeoWalletFile": "neo_test.json",
   "NeoJsonRpcUrl": "http://seed10.ngd.network:20332",
   "NeoChainID": 5,
   "NeoCCMC": "07946635d87e4120164835391e33a114135b69e1",
-  "NeoSysFee": 0,
-  "NeoNetFee": 0,
+  "SpecificContract": "19cd39b09acc059ef6cc92bf2aff80baae2533d2",
+  "NeoSysFee": 2,
+  "NeoNetFee": 0.02,
   "ScanInterval": 2,
   "RetryInterval": 2,
   "DBPath": "boltdb",
-  "NeoSyncHeight": 266700,
-  "RelaySyncHeight": 4784369
+  "NeoSyncHeight": 284956,
+  "RelaySyncHeight": 4790618
 }

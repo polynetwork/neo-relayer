@@ -106,9 +106,11 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 					if execution.VMState == "FAULT" {
 						continue
 					}
+					notifications := execution.Notifications
 					for _, notification := range execution.Notifications {
 						u, _ := helper.UInt160FromString(notification.Contract)
-						if helper.BytesToHex(u.Bytes()) == this.config.NeoCCMC { // this tx is a cross chain tx
+						// outer loop confirm tx is a cross chain tx
+						if helper.BytesToHex(u.Bytes()) == this.config.NeoCCMC {
 							if notification.State.Type != "Array" {
 								return fmt.Errorf("[neoToRelay] notification.State.Type error: Type is not Array")
 							}
@@ -118,6 +120,30 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 							}
 							if len(states) != 6 {
 								return fmt.Errorf("[neoToRelay] notification.State.Value error: Wrong length of states")
+							}
+
+							if this.config.SpecificContract != "" { // when empty, relay everything
+								for index, ntf := range notifications {
+									// inner loop check it is for this specific contract
+									v, _ := helper.UInt160FromString(ntf.Contract)
+									if helper.BytesToHex(v.Bytes()) != this.config.SpecificContract {
+										if index < len(notifications)-1 {
+											continue
+										}
+										log.Infof("This cross chain tx is not for this specific contract.")
+										return nil
+									} else {
+										break
+									}
+									// more constraints
+									//states2 := ntf.State.Value
+									//if states2[0].Value != "4c6f636b4576656e74" { // "LockEvent" in lock proxy
+									//	continue
+									//}
+									//if len(states2) != 7 {
+									//	return fmt.Errorf("[neoToRelay] notification.State.Value error: Wrong length of states of LockEvent")
+									//}
+								}
 							}
 							key := states[4].Value // hexstring for storeKey: 0102 + toChainId + toRequestId, like 01020501
 							//get relay chain sync height

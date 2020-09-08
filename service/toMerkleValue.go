@@ -1,5 +1,7 @@
 package service
 
+import "math/big"
+
 type ToMerkleValue struct {
 	TxHash      []byte // poly chain tx hash
 	FromChainID uint64
@@ -7,7 +9,7 @@ type ToMerkleValue struct {
 }
 
 type CrossChainTxParameter struct {
-	TxHash       []byte // source chain tx hash
+	TxHash       []byte // source chain tx hash, when FromChainID = 2 (eth), it's a key
 	CrossChainID []byte
 	FromContract []byte
 
@@ -17,25 +19,25 @@ type CrossChainTxParameter struct {
 	Args       []byte
 }
 
-func DeserializeArgs(source []byte) ([]byte, []byte, uint64, error) {
+func DeserializeArgs(source []byte) ([]byte, []byte, *big.Int, error) {
 	offset := 0
 	var err error
 	assetHash, offset, err := ReadVarBytes(source, offset)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, nil, err
 	}
 
 	toAddress, offset, err := ReadVarBytes(source, offset)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, nil, err
 	}
 
 	toAmount, offset, err := ReadUInt255(source, offset)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, nil, err
 	}
 
-	return assetHash, toAddress, toAmount.Uint64(), nil
+	return assetHash, toAddress, toAmount, nil
 }
 
 func DeserializeMerkleValue(source []byte) (*ToMerkleValue, error) {

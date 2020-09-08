@@ -34,9 +34,9 @@ const (
 // GetCurrentNeoChainSyncHeight
 func (this *SyncService) GetCurrentNeoChainSyncHeight(relayChainID uint64) (uint64, error) {
 	arg := models.NewInvokeFunctionStackArg("Integer", fmt.Sprint(relayChainID))
-	response := this.neoSdk.InvokeFunction("0x"+helper.ReverseString(this.config.NeoCCMC), GET_CURRENT_HEIGHT, arg)
-	if response.HasError() {
-		return 0, fmt.Errorf("[GetCurrentNeoChainSyncHeight] GetCurrentHeight error: %s", response.Error.Message)
+	response := this.neoSdk.InvokeFunction("0x"+helper.ReverseString(this.config.NeoCCMC), GET_CURRENT_HEIGHT, helper.ZeroScriptHashString, arg)
+	if response.HasError() || response.Result.State == "FAULT" {
+		return 0, fmt.Errorf("[GetCurrentNeoChainSyncHeight] GetCurrentHeight error: %s", "Engine faulted! " + response.Error.Message)
 	}
 
 	var height uint64
@@ -257,6 +257,22 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	}
 	log.Infof("txProofHeader: " + helper.BytesToHex(headerToBeVerified.GetMessage()))
 
+	// check constraints
+	if this.config.SpecificContract != "" { // if empty, relay everything
+		stateRootValue, err := MerkleProve(path, headerToBeVerified.CrossStateRoot.ToArray())
+		if err != nil {
+			return fmt.Errorf("[syncProofToNeo] MerkleProve error: %s", err)
+		}
+		toMerkleValue, err := DeserializeMerkleValue(stateRootValue)
+		if err != nil {
+			return fmt.Errorf("[syncProofToNeo] DeserializeMerkleValue error: %s", err)
+		}
+		if helper.BytesToHex(toMerkleValue.TxParam.ToContract) != this.config.SpecificContract {
+			log.Infof("This cross chain tx is not for this specific contract.")
+			return nil
+		}
+	}
+
 	var headerProofBytes []byte
 	var currentHeaderBytes []byte
 	var signListBytes []byte
@@ -316,21 +332,6 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	}
 	log.Infof("signList: " + helper.BytesToHex(signListBytes))
 
-	stateRootValue, err := MerkleProve(path, headerToBeVerified.CrossStateRoot.ToArray())
-	if err != nil {
-		return fmt.Errorf("[syncProofToNeo] MerkleProve error: %s", err)
-	}
-	toMerkleValue, err := DeserializeMerkleValue(stateRootValue)
-	if err != nil {
-		return fmt.Errorf("[syncProofToNeo] DeserializeMerkleValue error: %s", err)
-	}
-
-	fromContract := toMerkleValue.TxParam.FromContract
-	log.Infof(helper.BytesToHex(fromContract))
-
-	toContract := toMerkleValue.TxParam.ToContract
-	log.Infof(helper.BytesToHex(toContract))
-
 	// build script
 	scriptBuilder := sc.NewScriptBuilder()
 	scriptHash := helper.HexToBytes(this.config.NeoCCMC) // hex string to little endian byte[]
@@ -338,6 +339,7 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	args := []sc.ContractParameter{txProof, txProofHeader, headProof, currentHeader, signList}
 	scriptBuilder.MakeInvocationScript(scriptHash, VERIFY_AND_EXECUTE_TX, args)
 	script := scriptBuilder.ToArray()
+	//log.Infof("script: " + helper.BytesToHex(script))
 
 	tb := tx.NewTransactionBuilder(this.config.NeoJsonRpcUrl)
 	from, err := helper.AddressToScriptHash(this.neoAccount.Address)

@@ -13,23 +13,19 @@ import (
 func MerkleProve(path, root []byte) ([]byte, error) {
 	offset := 0
 	value, offset, err := ReadVarBytes(path, offset)
-	log.Printf(helper.BytesToHex(value))
 	if err != nil {
 		return nil, err
 	}
 	hash := HashLeaf(value)
-	log.Printf(helper.BytesToHex(hash))
 	size := (len(path) - offset) / 32
 	for i := 0; i < size; i++ {
 		var f []byte
 		f, offset, err = ReadBytes(path, offset, 1)
-		log.Printf(helper.BytesToHex(f))
 		if err != nil {
 			return nil, err
 		}
 		var v []byte
 		v, offset, err = ReadBytes(path, offset, 32)
-		log.Printf(helper.BytesToHex(v))
 		if err != nil {
 			return nil, err
 		}
@@ -124,6 +120,6 @@ func ReadUInt255(buffer []byte, offset int) (*big.Int, int, error) {
 	if offset+32 > len(buffer) {
 		return nil, 0, fmt.Errorf("invalid offset")
 	}
-	res := big.Int{}
-	return res.SetBytes(buffer[offset : offset+32]), offset + 32, nil
+	res := helper.BigIntFromNeoBytes(buffer[offset : offset+32])
+	return res, offset + 32, nil
 }

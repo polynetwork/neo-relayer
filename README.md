@@ -26,15 +26,21 @@ Before running, you need feed the configuration file `config.json`.
 
 ```
 {
-  "RelayJsonRpcUrl": "http://40.115.182.238:40336",             // poly node
-  "WalletFile": "./wallet.dat",                                 // poly chain wallet file
-  "NeoWalletFile": "./a.json",                                  // neo chain wallet file
-  "NeoJsonRpcUrl": "http://47.89.240.111:12332",                // neo node
-  "NeoChainID": 4,                                              // neo chain ID
-  "NeoCCMC": "7f25d672e8626d2beaa26f2cb40da6b91f40a382",        // neo ccmc script hash in little endian
-  "ScanInterval": 2,                                            // interval for scanning chains
-  "NeoSyncHeight": 178168,                                      // start scanning height of poly
-  "RelaySyncHeight": 1262851                                    // start scanning height of neo
+  "RelayJsonRpcUrl": "http://40.115.182.238:20336",                 // poly node rpc port 
+  "RelayChainID": 0,                                                // poly chain id
+  "WalletFile": "./wallet.dat",                                     // poly chain wallet file
+  "NeoWalletFile": "neo_test.json",                                 // neo chain wallet file
+  "NeoJsonRpcUrl": "http://seed10.ngd.network:20332",               // neo node rpc port
+  "NeoChainID": 5,                                                  // neo chain id
+  "NeoCCMC": "07946635d87e4120164835391e33a114135b69e1",            // neo ccmc script hash in little endian
+  "SpecificContract": "19cd39b09acc059ef6cc92bf2aff80baae2533d2",   // the specific contract you want to monitor, eg. lock proxy, if empty, everything will be relayed
+  "NeoSysFee": 2,                                                   // extra system fee for neo chain
+  "NeoNetFee": 0.02,                                                // extra network fee for neo chain
+  "ScanInterval": 2,                                                // interval for scanning chains
+  "RetryInterval": 2,                                               // interval for retrying sending tx to poly   
+  "DBPath": "boltdb",                                               // path for bolt db
+  "NeoSyncHeight": 284956,                                          // start scanning height of poly
+  "RelaySyncHeight": 4790618                                        // start scanning height of neo
 }
 ```
 
