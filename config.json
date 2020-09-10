@@ -3,15 +3,15 @@
   "RelayChainID": 0,
   "WalletFile": "./wallet.dat",
   "NeoWalletFile": "neo_test.json",
-  "NeoJsonRpcUrl": "http://seed10.ngd.network:20332",
+  "NeoJsonRpcUrl": "http://seed10.ngd.network:21332",
   "NeoChainID": 5,
   "NeoCCMC": "07946635d87e4120164835391e33a114135b69e1",
-  "SpecificContract": "19cd39b09acc059ef6cc92bf2aff80baae2533d2",
-  "NeoSysFee": 2,
-  "NeoNetFee": 0.02,
+  "SpecificContract": "a9a3dfd1a1423e598bd508b4cbf0d572e78f9e22",
+  "NeoSysFee": 0,
+  "NeoNetFee": 0,
   "ScanInterval": 2,
   "RetryInterval": 2,
   "DBPath": "boltdb",
-  "NeoSyncHeight": 284956,
-  "RelaySyncHeight": 4790618
+  "NeoSyncHeight": 311136,
+  "RelaySyncHeight": 4800784
 }

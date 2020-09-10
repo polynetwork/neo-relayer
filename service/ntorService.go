@@ -131,6 +131,7 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 											continue
 										}
 										log.Infof("This cross chain tx is not for this specific contract.")
+										this.relaySyncHeight++
 										return nil
 									} else {
 										break
@@ -173,4 +174,18 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 		}
 	}
 	return nil
+}
+
+func (this *SyncService) NeoToRelayCheckAndRetry() {
+	for {
+		err := this.checkDoneTx()
+		if err != nil {
+			log.Errorf("[NeoToRelayCheckAndRetry] this.checkDoneTx error:%s", err)
+		}
+		err = this.retryTx()
+		if err != nil {
+			log.Errorf("[NeoToRelayCheckAndRetry] this.retryTx error:%s", err)
+		}
+		time.Sleep(time.Duration(this.config.ScanInterval) * time.Second)
+	}
 }

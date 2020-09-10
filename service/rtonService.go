@@ -86,3 +86,13 @@ func (this *SyncService) relayToNeo(m, n uint32) error {
 	}
 	return nil
 }
+
+func (this *SyncService) RelayToNeoRetry() {
+	for {
+		err := this.neoRetryTx()
+		if err != nil {
+			log.Errorf("[RelayToNeoRetry] this.neoRetryTx error:%s", err)
+		}
+		time.Sleep(time.Duration(this.config.ScanInterval) * time.Second)
+	}
+}

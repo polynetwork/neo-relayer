@@ -1,7 +1,6 @@
 package db
 // db not used
 import (
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"github.com/boltdb/bolt"
@@ -17,8 +16,11 @@ const MAX_NUM = 1000
 var (
 	BKTCheck = []byte("Check")
 	BKTRetry = []byte("Retry")
-	BKTHeight = []byte("Height")
+	BKTUtxo = []byte("Utxo")
 
+	BKTNeoRetry = []byte("NeoRetry")
+
+	BKTHeight = []byte("Height")
 	BKTHeader = []byte("Header") // bucket header
 	BKTHeightList = []byte("HeightList") // bucket header height list
 )
@@ -41,24 +43,42 @@ func NewBoltDB(filePath string) (*BoltDB, error) {
 	w.db = db
 	w.rwLock = new(sync.RWMutex)
 	w.filePath = filePath
-
+	// poly check
 	if err = db.Update(func(btx *bolt.Tx) error {
 		_, err := btx.CreateBucketIfNotExists(BKTCheck)
 		if err != nil {
 			return err
 		}
-
 		return nil
 	}); err != nil {
 		return nil, err
 	}
-
+	// poly retry
 	if err = db.Update(func(btx *bolt.Tx) error {
 		_, err := btx.CreateBucketIfNotExists(BKTRetry)
 		if err != nil {
 			return err
 		}
-
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	// neo utxo
+	if err = db.Update(func(btx *bolt.Tx) error {
+		_, err := btx.CreateBucketIfNotExists(BKTUtxo)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	// neo retry
+	if err = db.Update(func(btx *bolt.Tx) error {
+		_, err := btx.CreateBucketIfNotExists(BKTNeoRetry)
+		if err != nil {
+			return err
+		}
 		return nil
 	}); err != nil {
 		return nil, err
@@ -69,7 +89,6 @@ func NewBoltDB(filePath string) (*BoltDB, error) {
 		if err != nil {
 			return err
 		}
-
 		return nil
 	}); err != nil {
 		return nil, err
@@ -80,7 +99,6 @@ func NewBoltDB(filePath string) (*BoltDB, error) {
 		if err != nil {
 			return err
 		}
-
 		return nil
 	}); err != nil {
 		return nil, err
@@ -89,15 +107,52 @@ func NewBoltDB(filePath string) (*BoltDB, error) {
 	return w, nil
 }
 
-func (w *BoltDB) PutPolyHeight(height uint32) error {
+
+//func (w *BoltDB) PutPolyHeight(height uint32) error {
+//	w.rwLock.Lock()
+//	defer w.rwLock.Unlock()
+//
+//	raw := make([]byte, 4)
+//	binary.LittleEndian.PutUint32(raw, height)
+//	return w.db.Update(func(tx *bolt.Tx) error {
+//		bucket := tx.Bucket(BKTHeight)
+//		err := bucket.Put([]byte("poly"), raw)
+//		if err != nil {
+//			return err
+//		}
+//
+//		return nil
+//	})
+//}
+//
+//func (w *BoltDB) GetPolyHeight() uint32 {
+//	w.rwLock.RLock()
+//	defer w.rwLock.RUnlock()
+//
+//	var height uint32
+//	_ = w.db.View(func(tx *bolt.Tx) error {
+//		bucket := tx.Bucket(BKTHeight)
+//		raw := bucket.Get([]byte("poly"))
+//		if len(raw) == 0 {
+//			height = 0
+//			return nil
+//		}
+//		height = binary.LittleEndian.Uint32(raw)
+//		return nil
+//	})
+//
+//	return height
+//}
+
+
+
+func (w *BoltDB) PutNeoRetry(k []byte) error {
 	w.rwLock.Lock()
 	defer w.rwLock.Unlock()
 
-	raw := make([]byte, 4)
-	binary.LittleEndian.PutUint32(raw, height)
-	return w.db.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket(BKTHeight)
-		err := bucket.Put([]byte("poly"), raw)
+	return w.db.Update(func(btx *bolt.Tx) error {
+		bucket := btx.Bucket(BKTNeoRetry)
+		err := bucket.Put(k, []byte{0x00})
 		if err != nil {
 			return err
 		}
@@ -106,60 +161,48 @@ func (w *BoltDB) PutPolyHeight(height uint32) error {
 	})
 }
 
-func (w *BoltDB) GetPolyHeight() uint32 {
-	w.rwLock.RLock()
-	defer w.rwLock.RUnlock()
-
-	var height uint32
-	_ = w.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket(BKTHeight)
-		raw := bucket.Get([]byte("poly"))
-		if len(raw) == 0 {
-			height = 0
-			return nil
-		}
-		height = binary.LittleEndian.Uint32(raw)
-		return nil
-	})
-
-	return height
-}
-
-func (w *BoltDB) PutNeoHeight(height uint32) error {
+func (w *BoltDB) DeleteNeoRetry(k []byte) error {
 	w.rwLock.Lock()
 	defer w.rwLock.Unlock()
 
-	raw := make([]byte, 4)
-	binary.LittleEndian.PutUint32(raw, height)
 	return w.db.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket(BKTHeight)
-		err := bucket.Put([]byte("neo"), raw)
+		bucket := tx.Bucket(BKTNeoRetry)
+		err := bucket.Delete(k)
 		if err != nil {
 			return err
 		}
-
 		return nil
 	})
 }
 
-func (w *BoltDB) GetNeoHeight() uint32 {
-	w.rwLock.RLock()
-	defer w.rwLock.RUnlock()
+func (w *BoltDB) GetAllNeoRetry() ([][]byte, error) {
+	w.rwLock.Lock()
+	defer w.rwLock.Unlock()
 
-	var height uint32
-	_ = w.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket(BKTHeight)
-		raw := bucket.Get([]byte("neo"))
-		if len(raw) == 0 {
-			height = 0
+	retryList := make([][]byte, 0)
+	err := w.db.Update(func(tx *bolt.Tx) error {
+		bw := tx.Bucket(BKTNeoRetry)
+		err := bw.ForEach(func(k, _ []byte) error {
+			_k := make([]byte, len(k))
+			copy(_k, k)
+			retryList = append(retryList, _k)
+			if len(retryList) >= MAX_NUM {
+				return fmt.Errorf("max num")
+			}
 			return nil
+		})
+		if err != nil {
+			log.Errorf("GetAllRetry err: %s", err)
 		}
-		height = binary.LittleEndian.Uint32(raw)
 		return nil
 	})
-
-	return height
+	if err != nil {
+		return nil, err
+	}
+	return retryList, nil
 }
+
+
 
 func (w *BoltDB) PutCheck(txHash string, v []byte) error {
 	w.rwLock.Lock()
@@ -283,6 +326,49 @@ func (w *BoltDB) GetAllRetry() ([][]byte, error) {
 	return retryList, nil
 }
 
+func (w *BoltDB) PutUtxo(k []byte, isSpent bool) error {
+	w.rwLock.Lock()
+	defer w.rwLock.Unlock()
+
+	var v []byte
+	if isSpent {
+		v = []byte{0x01}
+	} else {
+		v = []byte{0x00}
+	}
+	return w.db.Update(func(btx *bolt.Tx) error {
+		bucket := btx.Bucket(BKTUtxo)
+		err := bucket.Put(k, v)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (w *BoltDB) GetUtxo(k []byte) (*bool, error) {
+	w.rwLock.RLock()
+	defer w.rwLock.RUnlock()
+
+	var isSpent bool
+	err := w.db.View(func(tx *bolt.Tx) error {
+		_v := tx.Bucket(BKTUtxo).Get(k)
+		if _v == nil || len(_v) < 1 {
+			return fmt.Errorf("value does not exist")
+		}
+		if _v[0] == 0x00 {
+			isSpent = false
+		} else {
+			isSpent = true
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &isSpent, nil
+}
 
 func (w *BoltDB) PutHeader(height uint32, rawHeader []byte) error {
 	w.rwLock.Lock()

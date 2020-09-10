@@ -75,11 +75,19 @@ func (this *SyncService) syncHeaderToRelay(height uint32) error {
 
 //syncProofToRelay : send StateRoot Proof to Relay Chain
 func (this *SyncService) syncProofToRelay(key string, height uint32) error {
+	retry := &db.Retry{
+		Height: height,
+		Key:    key,
+	}
+	sink := pCommon.NewZeroCopySink(nil)
+	retry.Serialization(sink)
+
 	//get current state height
 	var stateHeight uint32 = 0
 	for stateHeight < height {
 		res := this.neoSdk.GetStateHeight()
 		if res.HasError() {
+			this.db.PutRetry(sink.Bytes())
 			return fmt.Errorf("[syncProofToRelay] neoSdk.GetStateHeight error: %s", res.Error.Message)
 		}
 		stateHeight = res.Result.StateHeight
@@ -88,6 +96,7 @@ func (this *SyncService) syncProofToRelay(key string, height uint32) error {
 	// get state root
 	res2 := this.neoSdk.GetStateRootByIndex(height)
 	if res2.HasError() {
+		this.db.PutRetry(sink.Bytes())
 		return fmt.Errorf("[syncProofToRelay] neoSdk.GetStateRootByIndex error: %s", res2.Error.Message)
 	}
 	stateRoot := res2.Result.StateRoot
@@ -106,13 +115,6 @@ func (this *SyncService) syncProofToRelay(key string, height uint32) error {
 		return fmt.Errorf("[syncProofToRelay] decode proof error: %s", err)
 	}
 	//log.Info(stateRoot.StateRoot, "0x"+helper.ReverseString(this.config.NeoCCMC), key)
-
-	retry := &db.Retry{
-		Height: height,
-		Key:    key,
-	}
-	sink := pCommon.NewZeroCopySink(nil)
-	retry.Serialization(sink)
 
 	//sending SyncProof transaction to Relay Chain
 	txHash, err := this.relaySdk.Native.Ccm.ImportOuterTransfer(this.config.NeoChainID, nil, height, proof, this.relayAccount.Address[:], crossChainMsg, this.relayAccount)
@@ -198,23 +200,11 @@ func (this *SyncService) retrySyncProofToRelay(v []byte) error {
 func (this *SyncService) waitForRelayBlock() {
 	_, err := this.relaySdk.WaitForGenerateBlock(90*time.Second, 3)
 	if err != nil {
-		log.Errorf("waitForAliaBlock error: %s", err)
+		log.Errorf("[waitForRelayBlock] error: %s", err)
 	}
 }
 
-func (this *SyncService) ProcessToRelayCheckAndRetry() {
-	for {
-		err := this.checkDoneTx()
-		if err != nil {
-			log.Errorf("[ProcessToAllianceCheckAndRetry] this.checkDoneTx error:%s", err)
-		}
-		err = this.retryTx()
-		if err != nil {
-			log.Errorf("[ProcessToAllianceCheckAndRetry] this.retryTx error:%s", err)
-		}
-		time.Sleep(time.Duration(this.config.ScanInterval) * time.Second)
-	}
-}
+
 
 func (this *SyncService) checkDoneTx() error {
 	checkMap, err := this.db.GetAllCheck()
@@ -254,12 +244,10 @@ func (this *SyncService) retryTx() error {
 	for _, v := range retryList {
 		err = this.retrySyncProofToRelay(v)
 		if err != nil {
-			log.Errorf("[retryTx] this.retrySyncProofToAlia error:%s", err)
+			log.Errorf("[retryTx] this.retrySyncProofToRelay error:%s", err)
 		}
 		time.Sleep(time.Duration(this.config.RetryInterval) * time.Second)
 	}
 
 	return nil
 }
-
-
