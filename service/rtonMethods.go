@@ -20,6 +20,7 @@ import (
 	"github.com/polynetwork/poly/common"
 	"github.com/polynetwork/poly/core/types"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -245,7 +246,7 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 		Type:  sc.ByteArray,
 		Value: path,
 	}
-	//log.Infof("path: " + helper.BytesToHex(path))
+	log.Infof("txProof: " + helper.BytesToHex(path))
 
 	// get the next block header since it has the stateroot for the cross chain tx
 	blockHeightToBeVerified := txHeight + 1
@@ -257,7 +258,7 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 		Type:  sc.ByteArray,
 		Value: headerToBeVerified.GetMessage(),
 	}
-	//log.Infof("txProofHeader: " + helper.BytesToHex(headerToBeVerified.GetMessage()))
+	log.Infof("txProofHeader: " + helper.BytesToHex(headerToBeVerified.GetMessage()))
 
 	// check constraints
 	if this.config.SpecificContract != "" { // if empty, relay everything
@@ -301,7 +302,6 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 		if err != nil {
 			return fmt.Errorf("[syncProofToNeo] merkleProof DecodeString error: %s", err)
 		}
-		log.Infof("headerPath: " + helper.BytesToHex(headerProofBytes))
 
 		// get the raw current header
 		headerReliable, err := this.relaySdk.GetHeaderByHeight(blockHeightReliable)
@@ -318,35 +318,60 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 		}
 	}
 
-	headProof := sc.ContractParameter{
+	headerProof := sc.ContractParameter{
 		Type:  sc.ByteArray,
 		Value: headerProofBytes,
 	}
-	//log.Infof("headProof: " + helper.BytesToHex(headerProofBytes))
+	log.Infof("headerProof: " + helper.BytesToHex(headerProofBytes))
 
 	currentHeader := sc.ContractParameter{
 		Type:  sc.ByteArray,
 		Value: currentHeaderBytes,
 	}
-	//log.Infof("currentHeader: " + helper.BytesToHex(currentHeaderBytes))
+	log.Infof("currentHeader: " + helper.BytesToHex(currentHeaderBytes))
 
 	signList := sc.ContractParameter{
 		Type:  sc.ByteArray,
 		Value: signListBytes,
 	}
-	//log.Infof("signList: " + helper.BytesToHex(signListBytes))
+	log.Infof("signList: " + helper.BytesToHex(signListBytes))
+
+	stateRootValue, err := MerkleProve(path, headerToBeVerified.CrossStateRoot.ToArray())
+	if err != nil {
+		return fmt.Errorf("[syncProofToNeo] MerkleProve error: %s", err)
+	}
+	toMerkleValue, err := DeserializeMerkleValue(stateRootValue)
+	if err != nil {
+		return fmt.Errorf("[syncProofToNeo] DeserializeMerkleValue error: %s", err)
+	}
+	log.Infof("fromChainId: " + strconv.Itoa(int(toMerkleValue.FromChainID)))
+	log.Infof("polyTxHash: " + helper.BytesToHex(toMerkleValue.TxHash))
+	log.Infof("fromContract: " + helper.BytesToHex(toMerkleValue.TxParam.FromContract))
+	log.Infof("toChainId: " + strconv.Itoa(int(toMerkleValue.TxParam.ToChainID)))
+	log.Infof("sourceTxHash: " + helper.BytesToHex(toMerkleValue.TxParam.TxHash))
+	log.Infof("toContract: " + helper.BytesToHex(toMerkleValue.TxParam.ToContract))
+	log.Infof("method: " + helper.BytesToHex(toMerkleValue.TxParam.Method))
+	//log.Infof("TxParamArgs: " + helper.BytesToHex(toMerkleValue.TxParam.Args))
+	toAssetHash, toAddress, amount, err := DeserializeArgs(toMerkleValue.TxParam.Args)
+	if err != nil {
+		return fmt.Errorf("[syncProofToNeo] DeserializeArgs error: %s", err)
+	}
+	log.Infof("toAssetHash: " + helper.BytesToHex(toAssetHash))
+	log.Infof("toAddress: " + helper.BytesToHex(toAddress))
+	log.Infof("amount: " + amount.String())
 
 	// build script
 	scriptBuilder := sc.NewScriptBuilder()
 	scriptHash := helper.HexToBytes(this.config.NeoCCMC) // hex string to little endian byte[]
 
-	args := []sc.ContractParameter{txProof, txProofHeader, headProof, currentHeader, signList}
+	args := []sc.ContractParameter{txProof, txProofHeader, headerProof, currentHeader, signList}
 	scriptBuilder.MakeInvocationScript(scriptHash, VERIFY_AND_EXECUTE_TX, args)
 	script := scriptBuilder.ToArray()
-	//log.Infof("script: " + helper.BytesToHex(script))
+	log.Infof("script: " + helper.BytesToHex(script))
 
 	//tb := tx.NewTransactionBuilder(this.config.NeoJsonRpcUrl)
 	from, err := helper.AddressToScriptHash(this.neoAccount.Address)
+	log.Infof("from: " + helper.BytesToHex(from.Bytes())) // little endian
 
 	retry := &db.Retry{
 		Height: txHeight,
@@ -689,8 +714,12 @@ func (this *SyncService) GetTransactionInputs(from helper.UInt160, assetId helpe
 
 func (this *SyncService) GetGasConsumed(script []byte, checkWitnessHashes string) (*helper.Fixed8, error) {
 	response := this.neoSdk.InvokeScript(helper.BytesToHex(script), checkWitnessHashes)
-	if response.HasError() || response.Result.State == "FAULT" {
+	if response.HasError() {
 		return nil, fmt.Errorf(response.ErrorResponse.Error.Message)
+	}
+	if response.Result.State == "FAULT" { // CNEO case
+		result := helper.Fixed8FromInt64(10)
+		return &result, nil
 	}
 	gasConsumed, err := helper.Fixed8FromString(response.Result.GasConsumed)
 	if err != nil {
