@@ -717,15 +717,15 @@ func (this *SyncService) GetGasConsumed(script []byte, checkWitnessHashes string
 	if response.HasError() {
 		return nil, fmt.Errorf(response.ErrorResponse.Error.Message)
 	}
-	if response.Result.State == "FAULT" { // CNEO case
-		result := helper.Fixed8FromInt64(10)
+	if response.Result.State == "FAULT" { // CNEO case, use ScriptContainer in contract will cause engine fault
+		result := helper.Fixed8FromInt64(0)
 		return &result, nil
 	}
 	gasConsumed, err := helper.Fixed8FromString(response.Result.GasConsumed)
 	if err != nil {
 		return nil, err
 	}
-	gas := gasConsumed.Sub(helper.Fixed8FromInt64(10))
+	gas := gasConsumed.Sub(helper.Fixed8FromInt64(50))
 	if gas.LessThan(helper.Zero) || gas.Equal(helper.Zero) {
 		return &helper.Zero, nil
 	} else {
