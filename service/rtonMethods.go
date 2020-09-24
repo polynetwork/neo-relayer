@@ -385,13 +385,6 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	netFee := helper.Fixed8FromFloat64(this.config.NeoNetFee)
 	itx, err := this.MakeInvocationTransaction(script, from, nil, from, sysFee, netFee)
 
-	////---------------------------------------
-	//if itx.Gas.Equal(helper.Zero) {
-	//	log.Infof("tx already done, height %d, key %s ", txHeight, key)
-	//	return nil
-	//}
-	////----------------------------------------
-
 	if err != nil {
 		if strings.Contains(err.Error(), "not enough balance in address") {
 			// utxo is not enough, put into NeoRetry
@@ -438,7 +431,7 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 			return err
 		}
 	}
-	//this.waitForNeoBlock()
+
 	return nil
 }
 
@@ -779,7 +772,14 @@ func (this *SyncService) GetBalance(account helper.UInt160, assetId helper.UInt2
 }
 
 func (this *SyncService) waitForNeoBlock() {
-	time.Sleep(time.Duration(15) * time.Second)
+	response := this.neoSdk.GetBlockCount()
+	currentNeoHeight := uint32(response.Result - 1)
+	newNeoHeight := currentNeoHeight
+	for currentNeoHeight == newNeoHeight {
+		time.Sleep(time.Duration(15) * time.Second)
+		newResponse := this.neoSdk.GetBlockCount()
+		newNeoHeight = uint32(newResponse.Result - 1)
+	}
 }
 
 func getRelayUncompressedKey(key keypair.PublicKey) []byte {

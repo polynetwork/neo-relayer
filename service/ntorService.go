@@ -61,14 +61,12 @@ func (this *SyncService) NeoToRelay() {
 func (this *SyncService) neoToRelay(m, n uint32) error {
 	for i := m; i < n; i++ {
 		log.Infof("[neoToRelay] start processing NEO block %d", this.relaySyncHeight)
-		//Sync key header of NEO, if block.nextConsensus is changed.
-		//request block from NEO, try rpc request 5 times, if failed, continue
+		// request block from NEO, try rpc request 5 times, if failed, continue
 		for j := 0; j < 5; j++ {
 			response := this.neoSdk.GetBlockByIndex(i)
 			if response.HasError() {
 				return fmt.Errorf("[neoToRelay] neoSdk.GetBlockByIndex error: %s", response.Error.Message)
 			}
-
 			blk := response.Result
 			if blk.Hash == "" {
 				if j == 4 {
@@ -77,20 +75,8 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 				}
 				continue
 			}
-			if blk.NextConsensus != this.neoNextConsensus {
-				log.Infof("[neoToRelay] Syncing Key blockHeader from NEO: %d", blk.Index)
-				// Syncing key blockHeader to Relay Chain
-				err := this.syncHeaderToRelay(this.relaySyncHeight)
-				if err != nil {
-					log.Errorf("--------------------------------------------------")
-					log.Errorf("[neoToRelay] syncHeaderToRelay error: %s", err)
-					log.Errorf("height: %d", i)
-					log.Errorf("--------------------------------------------------")
-				}
-				this.neoNextConsensus = blk.NextConsensus
-			}
 
-			//Sync cross chain transaction
+			// sync cross chain transaction
 			// check if this block contains cross chain tx
 			txs := blk.Tx
 			for _, tx := range txs {
@@ -136,14 +122,6 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 									} else {
 										break
 									}
-									// more constraints
-									//states2 := ntf.State.Value
-									//if states2[0].Value != "4c6f636b4576656e74" { // "LockEvent" in lock proxy
-									//	continue
-									//}
-									//if len(states2) != 7 {
-									//	return fmt.Errorf("[neoToRelay] notification.State.Value error: Wrong length of states of LockEvent")
-									//}
 								}
 							}
 							key := states[4].Value // hexstring for storeKey: 0102 + toChainId + toRequestId, like 01020501
@@ -169,6 +147,22 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 					} // notification
 				} // execution
 			}
+
+			// if block.nextConsensus is changed, sync key header of NEO,
+			// but should be done after all cross chain tx in this block are handled for verification purpose.
+			if blk.NextConsensus != this.neoNextConsensus {
+				log.Infof("[neoToRelay] Syncing Key blockHeader from NEO: %d", blk.Index)
+				// Syncing key blockHeader to Relay Chain
+				err := this.syncHeaderToRelay(this.relaySyncHeight)
+				if err != nil {
+					log.Errorf("--------------------------------------------------")
+					log.Errorf("[neoToRelay] syncHeaderToRelay error: %s", err)
+					log.Errorf("height: %d", i)
+					log.Errorf("--------------------------------------------------")
+				}
+				this.neoNextConsensus = blk.NextConsensus
+			}
+
 			this.relaySyncHeight++
 			break
 		}
