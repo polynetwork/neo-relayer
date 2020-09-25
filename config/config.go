@@ -26,9 +26,10 @@ type Config struct {
 	NeoSysFee        float64
 	NeoNetFee        float64
 
-	ScanInterval  uint64
-	RetryInterval uint64
-	DBPath        string
+	ScanInterval     uint64
+	RetryInterval    uint64
+	DBPath           string
+	ChangeBookkeeper bool
 
 	NeoSyncHeight   uint32
 	RelaySyncHeight uint32

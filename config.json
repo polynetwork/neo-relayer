@@ -12,6 +12,7 @@
   "ScanInterval": 2,
   "RetryInterval": 2,
   "DBPath": "boltdb",
+  "ChangeBookkeeper": false,
   "NeoSyncHeight": 390257,
   "RelaySyncHeight": 4800784
 }
