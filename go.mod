@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/boltdb/bolt v1.3.1
 	github.com/btcsuite/btcd v0.20.1-beta
-	github.com/joeqian10/neo-gogogo v0.0.0-20200908064136-cd18900715ef
+	github.com/joeqian10/neo-gogogo v0.0.0-20200927211620-31f8625645e9
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/onsi/ginkgo v1.10.1 // indirect

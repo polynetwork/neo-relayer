@@ -110,7 +110,7 @@ func Test_999(t *testing.T)  {
 	tb := tx.NewTransactionBuilder("http://seed6.ngd.network:11332")
 	from, err := helper.AddressToScriptHash("AbQMu96ZpzREtEhW6b7gUcCCTWLmpSJSZ9")
 	// create an InvocationTransaction
-	itx, err := tb.MakeInvocationTransaction(s, from, nil, from, helper.Zero)
+	itx, err := tb.MakeInvocationTransaction(s, from, nil, from, helper.Zero, helper.Zero)
 	if err != nil {
 		fmt.Errorf("[changeBookKeeper] tb.MakeInvocationTransaction error: %s", err)
 	}

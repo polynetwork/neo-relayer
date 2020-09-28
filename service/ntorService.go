@@ -117,8 +117,7 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 											continue
 										}
 										log.Infof("This cross chain tx is not for this specific contract.")
-										this.relaySyncHeight++
-										return nil
+										goto NEXT
 									} else {
 										break
 									}
@@ -144,6 +143,7 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 								log.Errorf("--------------------------------------------------")
 							}
 						}
+					NEXT:
 					} // notification
 				} // execution
 			}
