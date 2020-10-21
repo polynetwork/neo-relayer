@@ -11,7 +11,7 @@ import (
 
 // RelayToNeo sync headers from relay chain to neo
 func (this *SyncService) RelayToNeo() {
-	this.neoSyncHeight = this.config.NeoSyncHeight
+	this.neoSyncHeight = this.config.PolyStartHeight
 	for {
 		currentRelayChainHeight, err := this.relaySdk.GetCurrentBlockHeight()
 		if err != nil {

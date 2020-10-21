@@ -31,8 +31,8 @@ type Config struct {
 	DBPath           string
 	ChangeBookkeeper bool
 
-	NeoSyncHeight   uint32
-	RelaySyncHeight uint32
+	PolyStartHeight uint32
+	NeoStartHeight  uint32
 }
 
 //Default config instance

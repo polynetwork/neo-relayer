@@ -33,16 +33,17 @@ Before running, you need feed the configuration file `config.json`.
   "WalletFile": "./poly_test.dat",                                  // poly chain wallet file
   "NeoWalletFile": "neo_test.json",                                 // neo chain wallet file
   "NeoJsonRpcUrl": "http://seed10.ngd.network:20332",               // neo node rpc port
-  "NeoChainID": 5,                                                  // neo chain id
+  "NeoChainID": 5,                                                  // neo chain id, 4 is for mainnet, 5 is for testnet
   "NeoCCMC": "07946635d87e4120164835391e33a114135b69e1",            // neo ccmc script hash in little endian
   "SpecificContract": "19cd39b09acc059ef6cc92bf2aff80baae2533d2",   // the specific contract you want to monitor, eg. lock proxy, if empty, everything will be relayed
-  "NeoSysFee": 2,                                                   // extra system fee for neo chain
+  "NeoSysFee": 0,                                                   // extra system fee for neo chain
   "NeoNetFee": 0.02,                                                // extra network fee for neo chain
   "ScanInterval": 2,                                                // interval for scanning chains
   "RetryInterval": 2,                                               // interval for retrying sending tx to poly
   "DBPath": "boltdb",                                               // path for bolt db
-  "NeoSyncHeight": 284956,                                          // start scanning height of poly
-  "RelaySyncHeight": 4790618                                        // start scanning height of neo
+  "ChangeBookkeeper": false,                                        // change bookkeeper or not
+  "PolyStartHeight": 284956,                                        // start scanning height of poly
+  "NeoStartHeight": 4790618                                         // start scanning height of neo
 }
 ```
 

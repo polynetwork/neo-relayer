@@ -9,8 +9,8 @@ import (
 
 //NeoToRelay ...
 func (this *SyncService) NeoToRelay() {
-	this.relaySyncHeight = this.config.RelaySyncHeight // means the next height to be synced
-	if this.relaySyncHeight == 0 { // means no block header has been synced
+	this.relaySyncHeight = this.config.NeoStartHeight // means the next height to be synced
+	if this.relaySyncHeight == 0 {                    // means no block header has been synced
 		this.neoNextConsensus = ""
 	} else {
 		for j:= 0; j<5; j++{
