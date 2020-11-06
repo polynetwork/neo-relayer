@@ -351,14 +351,15 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	log.Infof("sourceTxHash: " + helper.BytesToHex(toMerkleValue.TxParam.TxHash))
 	log.Infof("toContract: " + helper.BytesToHex(toMerkleValue.TxParam.ToContract))
 	log.Infof("method: " + helper.BytesToHex(toMerkleValue.TxParam.Method))
-	//log.Infof("TxParamArgs: " + helper.BytesToHex(toMerkleValue.TxParam.Args))
-	toAssetHash, toAddress, amount, err := DeserializeArgs(toMerkleValue.TxParam.Args)
-	if err != nil {
-		return fmt.Errorf("[syncProofToNeo] DeserializeArgs error: %s", err)
-	}
-	log.Infof("toAssetHash: " + helper.BytesToHex(toAssetHash))
-	log.Infof("toAddress: " + helper.BytesToHex(toAddress))
-	log.Infof("amount: " + amount.String())
+	log.Infof("TxParamArgs: " + helper.BytesToHex(toMerkleValue.TxParam.Args))
+
+	//toAssetHash, toAddress, amount, err := DeserializeArgs(toMerkleValue.TxParam.Args)
+	//if err != nil {
+	//	return fmt.Errorf("[syncProofToNeo] DeserializeArgs error: %s", err)
+	//}
+	//log.Infof("toAssetHash: " + helper.BytesToHex(toAssetHash))
+	//log.Infof("toAddress: " + helper.BytesToHex(toAddress))
+	//log.Infof("amount: " + amount.String())
 
 	// build script
 	scriptBuilder := sc.NewScriptBuilder()
