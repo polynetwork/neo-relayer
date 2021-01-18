@@ -36,7 +36,7 @@ const (
 
 // GetCurrentNeoChainSyncHeight
 func (this *SyncService) GetCurrentNeoChainSyncHeight(relayChainID uint64) (uint64, error) {
-	arg := models.NewInvokeFunctionStackArg("Integer", fmt.Sprint(relayChainID))
+	arg := models.InvokeStack{Type: "Integer", Value: relayChainID}
 	response := this.neoSdk.InvokeFunction("0x"+helper.ReverseString(this.config.NeoCCMC), GET_CURRENT_HEIGHT, helper.ZeroScriptHashString, arg)
 	if response.HasError() || response.Result.State == "FAULT" {
 		return 0, fmt.Errorf("[GetCurrentNeoChainSyncHeight] GetCurrentHeight error: %s", "Engine faulted! "+response.Error.Message)
@@ -47,7 +47,8 @@ func (this *SyncService) GetCurrentNeoChainSyncHeight(relayChainID uint64) (uint
 	var b []byte
 	s := response.Result.Stack
 	if s != nil && len(s) != 0 {
-		b = helper.HexToBytes(s[0].Value)
+		s[0].Convert()
+		b = helper.HexToBytes(s[0].Value.(string))
 	}
 	if len(b) == 0 {
 		height = 0
