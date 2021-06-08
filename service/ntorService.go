@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/joeqian10/neo-gogogo/helper"
+	"github.com/joeqian10/neo-gogogo/rpc/models"
 	"github.com/polynetwork/neo-relayer/log"
 	"time"
 )
@@ -61,7 +62,7 @@ func (this *SyncService) NeoToRelay() {
 
 func (this *SyncService) neoToRelay(m, n uint32) error {
 	for i := m; i < n; i++ {
-		log.Infof("[neoToRelay] start processing NEO block %d", this.relaySyncHeight)
+		log.Infof("[neoToRelay] start processing NEO block %d", i)
 		// request block from NEO, try rpc request 5 times, if failed, continue
 		for j := 0; j < 5; j++ {
 			response := this.neoSdk.GetBlockByIndex(i)
@@ -98,11 +99,14 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 						u, _ := helper.UInt160FromString(notification.Contract)
 						// outer loop confirm tx is a cross chain tx
 						if helper.BytesToHex(u.Bytes()) == this.config.NeoCCMC {
-							if notification.State.Type != "Array" {
+							state := notification.State
+							if state.Type != "Array" {
 								return fmt.Errorf("[neoToRelay] notification.State.Type error: Type is not Array")
 							}
-							states := notification.State.Value                               // []models.RpcContractParameter
-							if states[0].Value != "43726f7373436861696e4c6f636b4576656e74" { // "CrossChainLockEvent"
+							state.Convert() // state.Value is []InvokeStack
+							states := state.Value.([]models.InvokeStack)
+							states0 := states[0]
+							if states0.Value.(string) != "43726f7373436861696e4c6f636b4576656e74" { // "CrossChainLockEvent"
 								continue
 							}
 							if len(states) != 6 {
@@ -124,7 +128,9 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 									}
 								}
 							}
-							key := states[4].Value // hexstring for storeKey: 0102 + toChainId + toRequestId, like 01020501
+							states4 := states[4]
+							states4.Convert()
+							key := states4.Value.(string) // hexstring for storeKey: 0102 + toChainId + toRequestId, like 01020501
 							//get relay chain sync height
 							currentRelayChainSyncHeight, err := this.GetCurrentRelayChainSyncHeight(this.config.NeoChainID)
 							if err != nil {
@@ -154,7 +160,7 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 			if blk.NextConsensus != this.neoNextConsensus {
 				log.Infof("[neoToRelay] Syncing Key blockHeader from NEO: %d", blk.Index)
 				// Syncing key blockHeader to Relay Chain
-				err := this.syncHeaderToRelay(this.relaySyncHeight)
+				err := this.syncHeaderToRelay(i)
 				if err != nil {
 					log.Errorf("--------------------------------------------------")
 					log.Errorf("[neoToRelay] syncHeaderToRelay error: %s", err)

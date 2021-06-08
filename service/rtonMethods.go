@@ -36,27 +36,21 @@ const (
 
 // GetCurrentNeoChainSyncHeight
 func (this *SyncService) GetCurrentNeoChainSyncHeight(relayChainID uint64) (uint64, error) {
-	arg := models.InvokeStack{Type: "Integer", Value: relayChainID}
-	response := this.neoSdk.InvokeFunction("0x"+helper.ReverseString(this.config.NeoCCMC), GET_CURRENT_HEIGHT, helper.ZeroScriptHashString, arg)
-	if response.HasError() || response.Result.State == "FAULT" {
+	response := this.neoSdk.GetStorage("0x"+helper.ReverseString(this.config.NeoCCMC), "0201")
+	if response.HasError() {
 		return 0, fmt.Errorf("[GetCurrentNeoChainSyncHeight] GetCurrentHeight error: %s", "Engine faulted! "+response.Error.Message)
 	}
 
 	var height uint64
-	var e error
 	var b []byte
-	s := response.Result.Stack
-	if s != nil && len(s) != 0 {
-		s[0].Convert()
-		b = helper.HexToBytes(s[0].Value.(string))
+	s := response.Result
+	if len(s) != 0 {
+		b = helper.HexToBytes(s)
 	}
 	if len(b) == 0 {
 		height = 0
 	} else {
 		height = helper.BytesToUInt64(b)
-		if e != nil {
-			return 0, fmt.Errorf("[GetCurrentNeoChainSyncHeight], ParseVarInt error: %s", e)
-		}
 		height++ // means the next block header needs to be synced
 	}
 	return height, nil
@@ -129,7 +123,7 @@ func (this *SyncService) changeBookKeeper(block *types.Block) error {
 	}
 
 	rawTxString := itx.RawTransactionString()
-	log.Infof(rawTxString)
+	log.Infof("rawTxString: %s", rawTxString)
 	// send the raw transaction
 	response := this.neoSdk.SendRawTransaction(rawTxString)
 	if response.HasError() {
@@ -147,7 +141,7 @@ func (this *SyncService) changeBookKeeper(block *types.Block) error {
 			rawTxString)
 	}
 
-	log.Infof("[changeBookKeeper] txHash is: %s", itx.HashString())
+	log.Infof("[changeBookKeeper] neoTxHash is: %s", itx.HashString())
 	this.waitForNeoBlock()
 	return nil
 }
@@ -227,7 +221,7 @@ func (this *SyncService) syncHeaderToNeo(height uint32) error {
 			rawTxString)
 	}
 
-	log.Infof("[syncHeaderToNeo] txHash is: %s", itx.HashString())
+	log.Infof("[syncHeaderToNeo] neoTxHash is: %s", itx.HashString())
 	this.waitForNeoBlock()
 	return nil
 }
@@ -419,7 +413,7 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 		return fmt.Errorf("[syncProofToNeo] SendRawTransaction error: %s, path(cp1): %s, cp2: %d, syncProofToNeo RawTransactionString: %s",
 			response.ErrorResponse.Error.Message, helper.BytesToHex(path), int64(blockHeightReliable), rawTxString)
 	}
-	log.Infof("[syncProofToNeo] syncProofToNeo txHash is: %s", itx.HashString())
+	log.Infof("[syncProofToNeo] neoTxHash is: %s", itx.HashString())
 	// mark utxo
 	for _, unspent := range itx.Inputs {
 		neoUtxo := db.NeoUtxo{
@@ -585,7 +579,7 @@ func (this *SyncService) retrySyncProofToNeo(v []byte, lastSynced uint32) error 
 	response := this.neoSdk.SendRawTransaction(rawTxString)
 	if response.HasError() {
 		if strings.Contains(response.ErrorResponse.Error.Message, "Block or transaction validation failed") {
-			log.Infof("[retrySyncProofToNeo] remain tx in retry db, SendRawTransaction: height %d, key %s, db key %s", txHeight, key, helper.BytesToHex(v))
+			log.Infof("[retrySyncProofToNeo] remain tx in retry db, SendRawTransaction: height: %d, key: %s, db key: %s", txHeight, key, helper.BytesToHex(v))
 			return nil
 		}
 
@@ -593,11 +587,11 @@ func (this *SyncService) retrySyncProofToNeo(v []byte, lastSynced uint32) error 
 		if err != nil {
 			return fmt.Errorf("[retrySyncProofToNeo] this.db.DeleteNeoRetry error: %s", err)
 		}
-		log.Infof("[retrySyncProofToNeo] delete tx from retry db, height %d, key %s, db key %s", txHeight, key, helper.BytesToHex(v))
+		log.Infof("[retrySyncProofToNeo] delete tx from retry db, height: %d, key: %s, db key: %s", txHeight, key, helper.BytesToHex(v))
 		return fmt.Errorf("[retrySyncProofToNeo] SendRawTransaction error: %s, path(cp1): %s, cp2: %d, syncProofToNeo RawTransactionString: %s",
 			response.ErrorResponse.Error.Message, helper.BytesToHex(path), int64(blockHeightReliable), rawTxString)
 	}
-	log.Infof("[retrySyncProofToNeo] syncProofToNeo txHash is: %s", itx.HashString())
+	log.Infof("[retrySyncProofToNeo] neoTxHash is: %s", itx.HashString())
 	// mark utxo
 	for _, unspent := range itx.Inputs {
 		neoUtxo := db.NeoUtxo{
@@ -614,7 +608,7 @@ func (this *SyncService) retrySyncProofToNeo(v []byte, lastSynced uint32) error 
 	err = this.db.DeleteNeoRetry(v)
 	if err != nil {
 		err := this.db.DeleteNeoRetry(v)
-		log.Infof("[retrySyncProofToNeo] delete tx from retry db, height %d, key %s, db key %s", txHeight, key, helper.BytesToHex(v))
+		log.Infof("[retrySyncProofToNeo] delete tx from retry db, height: %d, key: %s, db key: %s", txHeight, key, helper.BytesToHex(v))
 		return fmt.Errorf("[retrySyncProofToNeo] this.db.DeleteNeoRetry error: %s", err)
 	}
 	//this.waitForNeoBlock()
@@ -630,11 +624,11 @@ func (this *SyncService) neoRetryTx() error {
 		// get current neo chain sync height, which is the reliable header height
 		currentNeoChainSyncHeight, err := this.GetCurrentNeoChainSyncHeight(this.relaySdk.ChainId)
 		if err != nil {
-			log.Errorf("[neoRetryTx] GetCurrentNeoChainSyncHeight error: ", err)
+			log.Errorf("[neoRetryTx] GetCurrentNeoChainSyncHeight error: %s", err)
 		}
 		err = this.retrySyncProofToNeo(v, uint32(currentNeoChainSyncHeight))
 		if err != nil {
-			log.Errorf("[neoRetryTx] this.retrySyncProofToNeo error:%s", err)
+			log.Errorf("[neoRetryTx] this.retrySyncProofToNeo error: %s", err)
 		}
 		time.Sleep(time.Duration(this.config.RetryInterval) * time.Second)
 	}

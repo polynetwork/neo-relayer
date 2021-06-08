@@ -7,11 +7,15 @@ import (
 	"github.com/joeqian10/neo-gogogo/rpc"
 	"github.com/joeqian10/neo-gogogo/tx"
 	"github.com/joeqian10/neo-gogogo/wallet/keys"
+	"github.com/ontio/ontology-crypto/signature"
 	"github.com/polynetwork/neo-relayer/log"
 	"github.com/stretchr/testify/assert"
 	"strconv"
 	"strings"
 	"testing"
+
+	goc "crypto"
+	golog "log"
 )
 
 func TestSyncService_GetCurrentNeoChainSyncHeight(t *testing.T) {
@@ -20,6 +24,29 @@ func TestSyncService_GetCurrentNeoChainSyncHeight(t *testing.T) {
 	s1 := strconv.Itoa(height)
 
 	assert.Equal(t, "64", s1)
+}
+
+func TestSyncService_GetCurrentNeoChainSyncHeight2(t *testing.T) {
+	c := rpc.NewClient("http://seed1.ngd.network:20332")
+	response := c.GetStorage("0x"+helper.ReverseString("07946635d87e4120164835391e33a114135b69e1"), "0201")
+	if response.HasError() {
+		panic(response.Error.Message)
+	}
+
+	var height uint64
+	var b []byte
+	s := response.Result
+	if len(s) != 0 {
+		b = helper.HexToBytes(s)
+	}
+	if len(b) == 0 {
+		height = 0
+	} else {
+		height = helper.BytesToUInt64(b)
+		height++ // means the next block header needs to be synced
+	}
+
+	assert.Equal(t, uint64(570768), height)
 }
 
 func Test_ConsensusPayload(t *testing.T) {
@@ -151,4 +178,68 @@ func Test_SaveLife(t *testing.T) {
 	}
 
 	log.Infof(strconv.Itoa(int(index)))
+}
+
+func Test666(t *testing.T)  {
+	c := rpc.NewClient("http://seed3.ngd.network:20332")
+	r1 := c.GetRawTransaction("0x526bf799e3d6d524b314c5fc8cc5ce49bf9e26b2b727f34fe8409e71cb6b29a8")
+	blockHash := r1.Result.BlockHash
+	r2 := c.GetBlockHeaderByHash(blockHash)
+	index := r2.Result.Index
+	log.Infof("%d", index)
+}
+
+func Test999(t *testing.T)  {
+	c := rpc.NewClient("http://seed3.ngd.network:20332")
+	h1 := c.GetBlockByIndex(1042046)
+	header := h1.Result
+	w := header.Witness
+	sh, err :=  helper.BytesToScriptHash(helper.HexToBytes(w.Verification))
+	assert.Nil(t, err)
+	log.Infof(sh.String())
+}
+
+func recoverPublicKeyFromSignature1(sig, hash []byte) ([]byte, error) {
+	s, err := signature.Deserialize(sig)
+	if err != nil {
+		return nil, err
+	}
+	t, ok := s.Value.([]byte)
+	if !ok {
+		return nil, fmt.Errorf("invalid signature type")
+	}
+	if len(t) != 65 {
+		return nil, fmt.Errorf("invalid signature length")
+	}
+
+	pubKey, _, err := btcec.RecoverCompact(btcec.S256(), t, hash) // S256 is secp256k1, P256 is secp256r1,
+	if err != nil {
+		return nil, err
+	}
+	return pubKey.SerializeCompressed(), nil // length in 65
+}
+
+func TestRecoverPubKey(t *testing.T) {
+	sigStrings := []string{
+		"011bdde0d937a7cd84c46858a62c88a4870721203d5f5a5a2d0e1bb57eabf69dba857e41927b2b259f5f5d31c34e6c18beaacc5da97f01c229b3876825c5ee550ecb",
+		"011b5b47d249b7f631b62e2f64c9dedc1b0f93fae7c087bd3b65c73f44de772c205e1dbbbb55ec09aff60474242411fb2afa809285678c070ba5bdbfc77f0c9ce725",
+		"011b4a817fa2d8c649a8f3f4d4665ebc5d99ca86833ae0046333e3baf3ec5d1e698f6f03e71cdb448b0ea22e257b5870d3c0e091b5d19b0e2d870fb327fa9f223dec",
+		"011c22afe10d418f995a04c13ab3305db9c1b265da43c2480a64a3faf895f1505f4650dde24e9848cba158337ffa01fa4d771485916b5ec4f52c690c35307d65c158",
+		"011cd9cf4c09a6d473d2bd2aa3461cd150bc4edbc88169166f1849bd67eb9c17899927e33616d5f467795dbff391d364a1736e272e27dd0030ec4b39553fc9603424",
+	}
+
+	block1Hash := helper.ReverseBytes(helper.HexToBytes("0e9108e96417976dfb2fb3725d5c74ddf67b9d78d71f17e282fceaf66c4e4405"))
+
+	hasher := goc.SHA256.New()
+	hasher.Write(block1Hash)
+	digest := hasher.Sum(nil)
+	golog.Println(helper.BytesToHex(digest))
+
+	sigs := make([][]byte, len(sigStrings))
+	for i, ss := range sigStrings {
+		sigs[i] = helper.HexToBytes(ss)
+		pubKey, err := recoverPublicKeyFromSignature1(sigs[i], digest)
+		assert.Nil(t, err)
+		golog.Println(helper.BytesToHex(pubKey))
+	}
 }

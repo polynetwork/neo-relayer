@@ -68,7 +68,7 @@ func (this *SyncService) syncHeaderToRelay(height uint32) error {
 	if txErr != nil {
 		return fmt.Errorf("[syncHeaderToRelay] relaySdk.SyncBlockHeader error: %s, neo header: %s", txErr, helper.BytesToHex(header))
 	}
-	log.Infof("[syncHeaderToRelay] txHash is: %s", txHash.ToHexString())
+	log.Infof("[syncHeaderToRelay] polyTxHash is: %s", txHash.ToHexString())
 	this.waitForRelayBlock()
 	return nil
 }
