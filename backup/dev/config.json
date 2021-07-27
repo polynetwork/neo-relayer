@@ -1,0 +1,18 @@
+{
+  "RelayJsonRpcUrl": "http://138.91.6.226:40336",
+  "RelayChainID": 0,
+  "WalletFile": "./poly_test.dat",
+  "NeoWalletFile": "./neo_test.json",
+  "NeoJsonRpcUrl": "http://168.62.167.190:30332",
+  "NeoChainID": 217,
+  "NeoCCMC": "ca4171d6f218a7f34a005be1a3888666a4a13531",
+  "SpecificContract": "",
+  "NeoSysFee": 0,
+  "NeoNetFee": 0,
+  "ScanInterval": 2,
+  "RetryInterval": 2,
+  "DBPath": "boltdb",
+  "ChangeBookkeeper": true,
+  "PolyStartHeight": 0,
+  "NeoStartHeight": 0
+}

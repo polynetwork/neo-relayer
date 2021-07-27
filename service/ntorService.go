@@ -85,6 +85,9 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 				if tx.Type != "InvocationTransaction" {
 					continue
 				}
+				//if !strings.Contains(tx.Script, this.config.NtorContract) {
+				//	continue
+				//}
 				response := this.neoSdk.GetApplicationLog(tx.Txid)
 				if response.HasError() {
 					return fmt.Errorf("[neoToRelay] neoSdk.GetApplicationLog error: %s", response.Error.Message)
@@ -113,11 +116,11 @@ func (this *SyncService) neoToRelay(m, n uint32) error {
 								return fmt.Errorf("[neoToRelay] notification.State.Value error: Wrong length of states")
 							}
 
-							if this.config.SpecificContract != "" { // when empty, relay everything
+							if this.config.NtorContract != "" { // when empty, relay everything
 								for index, ntf := range notifications {
 									// inner loop check it is for this specific contract
 									v, _ := helper.UInt160FromString(ntf.Contract)
-									if helper.BytesToHex(v.Bytes()) != this.config.SpecificContract {
+									if helper.BytesToHex(v.Bytes()) != this.config.NtorContract {
 										if index < len(notifications)-1 {
 											continue
 										}

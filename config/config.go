@@ -22,7 +22,8 @@ type Config struct {
 	NeoJsonRpcUrl    string
 	NeoChainID       uint64
 	NeoCCMC          string // little endian string
-	SpecificContract string // the specific contract which is monitored
+	NtorContract	 string // neo to relay contract which is monitored
+	RtonContract	 string // relay to neo contract which is monitored
 	NeoSysFee        float64
 	NeoNetFee        float64
 

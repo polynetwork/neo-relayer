@@ -6,7 +6,7 @@
   "NeoJsonRpcUrl": "http://seed1.ngd.network:20332",
   "NeoChainID": 5,
   "NeoCCMC": "07946635d87e4120164835391e33a114135b69e1",
-  "NtorContract": "5dea46e9ea7ac72aaa27b920d6921b89ec9adc2c",
+  "NtorContract": "4f2ec42fabda450a659dccdc80ee1176def05277",
   "RtonContract": "",
   "NeoSysFee": 0,
   "NeoNetFee": 0,
@@ -15,5 +15,5 @@
   "DBPath": "boltdb",
   "ChangeBookkeeper": false,
   "PolyStartHeight": 8800041,
-  "NeoStartHeight": 6463252
+  "NeoStartHeight": 5093370
 }
