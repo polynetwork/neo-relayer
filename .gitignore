@@ -6,3 +6,8 @@
 
 boltdb/*
 Logs/*
+
+backup/*
+neo.json
+poly.dat
+setup.txt

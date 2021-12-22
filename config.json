@@ -1,12 +1,12 @@
 {
-  "RelayJsonRpcUrl": "http://beta1.poly.network:20336",
+  "RelayJsonRpcUrl": "http://13.92.155.62:20336",
   "RelayChainID": 0,
-  "WalletFile": "./poly_test.dat",
-  "NeoWalletFile": "./neo_test.json",
-  "NeoJsonRpcUrl": "http://seed1.ngd.network:20332",
-  "NeoChainID": 5,
-  "NeoCCMC": "07946635d87e4120164835391e33a114135b69e1",
-  "NtorContract": "5dea46e9ea7ac72aaa27b920d6921b89ec9adc2c",
+  "WalletFile": "./poly.dat",
+  "NeoWalletFile": "./neo.json",
+  "NeoJsonRpcUrl": "http://seed10.ngd.network:11332",
+  "NeoChainID": 4,
+  "NeoCCMC": "7f25d672e8626d2beaa26f2cb40da6b91f40a382",
+  "NtorContract": "d3579a16e9c281e04708f752f56a6dd88ce4201b",
   "RtonContract": "",
   "NeoSysFee": 0,
   "NeoNetFee": 0,
@@ -14,6 +14,6 @@
   "RetryInterval": 2,
   "DBPath": "boltdb",
   "ChangeBookkeeper": false,
-  "PolyStartHeight": 8800041,
-  "NeoStartHeight": 6463252
+  "PolyStartHeight": 11027320,
+  "NeoStartHeight": 7795800
 }

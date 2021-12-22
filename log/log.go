@@ -56,7 +56,6 @@ const (
 	DEFAULT_MAX_LOG_SIZE = 20
 	BYTE_TO_MB           = 1024 * 1024
 	PATH                 = "./Logs/"
-	ErrorCasePath		 = "./Logs/ErrorCase/"
 )
 
 func GetGID() uint64 {

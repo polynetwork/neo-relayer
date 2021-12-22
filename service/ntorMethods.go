@@ -64,10 +64,10 @@ func (this *SyncService) syncHeaderToRelay(height uint32) error {
 	var txErr error
 	//Sending transaction to Relay Chain
 	txHash, txErr = this.relaySdk.Native.Hs.SyncBlockHeader(this.config.NeoChainID, this.relayAccount.Address, [][]byte{header}, this.relayAccount)
-
 	if txErr != nil {
 		return fmt.Errorf("[syncHeaderToRelay] relaySdk.SyncBlockHeader error: %s, neo header: %s", txErr, helper.BytesToHex(header))
 	}
+
 	log.Infof("[syncHeaderToRelay] polyTxHash is: %s", txHash.ToHexString())
 	this.waitForRelayBlock()
 	return nil
@@ -198,13 +198,11 @@ func (this *SyncService) retrySyncProofToRelay(v []byte) error {
 }
 
 func (this *SyncService) waitForRelayBlock() {
-	_, err := this.relaySdk.WaitForGenerateBlock(90*time.Second, 3)
+	_, err := this.relaySdk.WaitForGenerateBlock(90*time.Second)
 	if err != nil {
 		log.Errorf("[waitForRelayBlock] error: %s", err)
 	}
 }
-
-
 
 func (this *SyncService) checkDoneTx() error {
 	checkMap, err := this.db.GetAllCheck()

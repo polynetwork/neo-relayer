@@ -29,7 +29,6 @@ import (
 
 const (
 	VERIFY_AND_EXECUTE_TX = "VerifyAndExecuteTx"
-	GET_CURRENT_HEIGHT    = "currentSyncHeight"
 	CHANGE_BOOK_KEEPER    = "ChangeBookKeeper"
 	SYNC_BLOCK_HEADER     = "SyncBlockHeader"
 )
@@ -355,6 +354,10 @@ func (this *SyncService) syncProofToNeo(key string, txHeight, lastSynced uint32)
 	//log.Infof("toAssetHash: " + helper.BytesToHex(toAssetHash))
 	//log.Infof("toAddress: " + helper.BytesToHex(toAddress))
 	//log.Infof("amount: " + amount.String())
+
+	if helper.BytesToHex(toMerkleValue.TxParam.Method) != "756e6c6f636b" { // unlock
+		return fmt.Errorf("[syncProofToNeo] called method is invalid, height %d, key %s", txHeight, key)
+	}
 
 	// build script
 	scriptBuilder := sc.NewScriptBuilder()
